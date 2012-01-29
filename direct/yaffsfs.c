@@ -380,13 +380,28 @@ static void yaffsfs_BreakDeviceHandles(struct yaffs_dev *dev)
 /*
  *  Stuff to handle names.
  */
+#ifdef CONFIG_YAFFS_CASE_INSENSITIVE
 
+static int yaffs_toupper(YCHAR a)
+{
+    if(a >= 'a' && a <= 'z')
+           return (a - 'a') + 'A';
+    else
+           return a;
+}
+
+int yaffsfs_Match(YCHAR a, YCHAR b)
+{
+        return (yaffs_toupper(a) == yaffs_toupper(b));
+}
+#else
 
 int yaffsfs_Match(YCHAR a, YCHAR b)
 {
 	/* case sensitive */
 	return (a == b);
 }
+#endif
 
 int yaffsfs_IsPathDivider(YCHAR ch)
 {
@@ -405,7 +420,7 @@ int yaffsfs_CheckNameLength(const char *name)
 {
 	int retVal = 0;
 
-	int nameLength = strnlen(name,YAFFS_MAX_NAME_LENGTH+1);
+	int nameLength = yaffs_strnlen(name,YAFFS_MAX_NAME_LENGTH+1);
 
 	if(nameLength == 0){
 		yaffsfs_SetError(-ENOENT);
@@ -430,7 +445,7 @@ static int yaffsfs_alt_dir_path(const YCHAR *path, YCHAR **ret_path)
 	 * We will use 3 * max name length instead.
 	 */
 	*ret_path = NULL;
-	path_length = strnlen(path,(YAFFS_MAX_NAME_LENGTH+1)*3 +1);
+	path_length = yaffs_strnlen(path,(YAFFS_MAX_NAME_LENGTH+1)*3 +1);
 
 	/* If the last character is a path divider, then we need to
 	 * trim it back so that the name look-up works properly.
@@ -650,9 +665,9 @@ static struct yaffs_obj *yaffsfs_DoFindDirectory(struct yaffs_obj *startDir,
 			/* got to the end of the string */
 			return dir;
 		else{
-			if(strcmp(str,_Y(".")) == 0){
+			if(yaffs_strcmp(str,_Y(".")) == 0){
 				/* Do nothing */
-			} else if(strcmp(str,_Y("..")) == 0) {
+			} else if(yaffs_strcmp(str,_Y("..")) == 0) {
 				dir = dir->parent;
 			} else{
 				dir = yaffs_find_by_name(dir,str);
@@ -1430,7 +1445,7 @@ int yaffsfs_DoUnlink(const YCHAR *path,int isDirectory)
 		yaffsfs_SetError(-ELOOP);
 	else if(!dir)
 		yaffsfs_SetError(-ENOENT);
-	else if(strncmp(name,_Y("."),2) == 0)
+	else if(yaffs_strncmp(name,_Y("."),2) == 0)
 		yaffsfs_SetError(-EINVAL);
 	else if(!obj)
 		yaffsfs_SetError(-ENOENT);
@@ -1518,7 +1533,7 @@ int yaffs_rename(const YCHAR *oldPath, const YCHAR *newPath)
 	} else if(oldLoop || newLoop) {
 		yaffsfs_SetError(-ELOOP);
 		rename_allowed = 0;
-	} else if (olddir && oldname && strncmp(oldname, _Y("."),2) == 0){
+	} else if (olddir && oldname && yaffs_strncmp(oldname, _Y("."),2) == 0){
 		yaffsfs_SetError(-EINVAL);
 		rename_allowed = 0;
 	}else if(!olddir || !newdir || !obj) {
@@ -2379,7 +2394,7 @@ int yaffs_mkdir(const YCHAR *path, mode_t mode)
 		yaffsfs_SetError(-ENOENT);
 	else if(yaffsfs_TooManyObjects(parent->my_dev))
 		yaffsfs_SetError(-ENFILE);
-	else if(strnlen(name,5) == 0){
+	else if(yaffs_strnlen(name,5) == 0){
 		/* Trying to make the root itself */
 		yaffsfs_SetError(-EEXIST);
 	} else if(parent->my_dev->read_only)
@@ -2873,7 +2888,7 @@ yaffs_DIR *yaffs_opendir(const YCHAR *dirname)
 			memset(dsc,0,sizeof(yaffsfs_DirectorySearchContext));
                         dsc->magic = YAFFS_MAGIC;
                         dsc->dirObj = obj;
-                        strncpy(dsc->name,dirname,NAME_MAX);
+                        yaffs_strncpy(dsc->name,dirname,NAME_MAX);
                         INIT_LIST_HEAD(&dsc->others);
 
                         if(!search_contexts.next)
@@ -2904,7 +2919,7 @@ struct yaffs_dirent *yaffs_readdir(yaffs_DIR *dirp)
 			dsc->de.d_dont_use = (unsigned)dsc->nextReturn;
 			dsc->de.d_off = dsc->offset++;
 			yaffs_get_obj_name(dsc->nextReturn,dsc->de.d_name,NAME_MAX);
-			if(strnlen(dsc->de.d_name,NAME_MAX+1) == 0)
+			if(yaffs_strnlen(dsc->de.d_name,NAME_MAX+1) == 0)
 			{
 				/* this should not happen! */
 				strcpy(dsc->de.d_name,_Y("zz"));
@@ -2983,7 +2998,7 @@ int yaffs_symlink(const YCHAR *oldpath, const YCHAR *newpath)
 		yaffsfs_SetError(-ENOTDIR);
 	else if(loop)
 		yaffsfs_SetError(-ELOOP);
-	else if( !parent || strnlen(name,5) < 1)
+	else if( !parent || yaffs_strnlen(name,5) < 1)
 		yaffsfs_SetError(-ENOENT);
 	else if(yaffsfs_TooManyObjects(parent->my_dev))
 		yaffsfs_SetError(-ENFILE);
@@ -3033,7 +3048,7 @@ int yaffs_readlink(const YCHAR *path, YCHAR *buf, int bufsiz)
 	else {
 		YCHAR *alias = obj->variant.symlink_variant.alias;
 		memset(buf,0,bufsiz);
-		strncpy(buf,alias,bufsiz - 1);
+		yaffs_strncpy(buf,alias,bufsiz - 1);
 		retVal = 0;
 	}
 	yaffsfs_Unlock();

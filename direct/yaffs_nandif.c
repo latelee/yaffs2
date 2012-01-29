@@ -216,12 +216,12 @@ struct yaffs_dev *
 	yaffs_add_dev_from_geometry(const YCHAR *name,
 					const ynandif_Geometry *geometry)
 {
-	YCHAR *clonedName = malloc(sizeof(YCHAR) * (strnlen(name,YAFFS_MAX_NAME_LENGTH)+1));
+	YCHAR *clonedName = malloc(sizeof(YCHAR) * (yaffs_strnlen(name,YAFFS_MAX_NAME_LENGTH)+1));
 	struct yaffs_dev *dev = malloc(sizeof(struct yaffs_dev));
 
 	if(dev && clonedName){
 		memset(dev,0,sizeof(struct yaffs_dev));
-		strcpy(clonedName,name);
+		yaffs_strcpy(clonedName,name);
 
 		dev->param.name = clonedName;
 		dev->param.write_chunk_tags_fn = ynandif_WriteChunkWithTagsToNAND;

@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "yaffsfs.h"
 
@@ -2797,6 +2798,59 @@ void max_files_test(const char *mountpt)
 
 }
 
+void case_insensitive_test(const char *mountpt)
+{
+        char fn[100];
+        char fn2[100];
+        char buffer[100];
+        int ret;
+        struct yaffs_stat s;
+        int h;
+        char *x;
+
+	yaffs_trace_mask = 0;
+
+	yaffs_start_up();
+
+	yaffs_mount(mountpt);
+	dump_directory_tree(mountpt);
+
+	sprintf(fn,"%s/Abc.Txt",mountpt);
+	yaffs_unlink(fn);
+	h = yaffs_open(fn, O_CREAT | O_TRUNC | O_RDWR, S_IREAD | S_IWRITE);
+
+	ret = yaffs_write(h,fn, strlen(fn) + 1);
+
+	ret = yaffs_close(h);
+
+	dump_directory_tree(mountpt);
+
+
+	strcpy(fn2, fn);
+	x = fn2;
+	while(*x) {
+		*x = toupper(*x);
+		x++;
+        }
+
+        h = yaffs_open(fn2, O_RDONLY, 0);
+        ret = yaffs_read(h, buffer, 100);
+
+        if (ret != strlen(fn) + 1 || memcmp(buffer, fn, ret)){
+		printf("wrong file read\n");
+        } else {
+		printf("File %s is the same as file %s\n", fn, fn2);
+        }
+
+        ret = yaffs_stat(fn2, &s);
+
+	printf("renaming\n");
+
+        ret = yaffs_rename(fn, fn2);
+ 	dump_directory_tree(mountpt);
+
+}
+
 void start_twice(const char *mountpt)
 {
          printf("About to do first yaffs_start\n");
@@ -2877,9 +2931,11 @@ int main(int argc, char *argv[])
 	 //basic_utime_test("/yaffs2");
 
 	 //max_files_test("/yaffs2");
-	 
-	 start_twice("/yaffs2");
 
+	 //start_twice("/yaffs2");
+#ifdef CONFIG_YAFFS_CASE_INSENSITIVE
+	 case_insensitive_test("/yaffs2");
+#endif
 
 	 return 0;
 

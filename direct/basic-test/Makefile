@@ -24,6 +24,7 @@ CFLAGS +=    -Wall -g $(EXTRA_COMPILE_FLAGS) -Werror=strict-aliasing
 #CFLAGS +=    -fno-strict-aliasing
 CFLAGS +=    -O0
 #CFLAGS +=    -DVALGRIND_TEST
+CFLAGS +=     -DCONFIG_YAFFS_CASE_INSENSITIVE
 
 CFLAGS+=   -Wshadow -Werror=pointer-arith -Werror=write-strings
 CFLAGS+=   -Werror=strict-prototypes -Werror=missing-parameter-type
