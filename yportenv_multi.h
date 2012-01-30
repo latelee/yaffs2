@@ -58,6 +58,7 @@
 #define yaffs_strncpy(a, b, c) strncpy(a, b, c)
 #define yaffs_strncmp(a, b, c) strncmp(a, b, c)
 #define yaffs_strnlen(s,m)	strnlen(s,m)
+#define yaffs_strcmp(a,b)	strcmp(a,b)
 
 #define YAFFS_LOSTNFOUND_NAME		"lost+found"
 #define YAFFS_LOSTNFOUND_PREFIX		"obj"
