@@ -75,12 +75,13 @@ YAFFSDIRECTSYMLINKS = \
 
 
 DIRECTTESTOBJS = $(COMMONTESTOBJS) dtest.o
+STEPHANETESTOBJS = $(COMMONTESTOBJS) stephanetest.o
 
 BOOTTESTOBJS = bootldtst.o yboot.o yaffs_fileem.o nand_ecc.o
 
-ALLOBJS = $(sort $(DIRECTTESTOBJS) $(YAFFSTESTOBJS))
+ALLOBJS = $(sort $(DIRECTTESTOBJS) $(YAFFSTESTOBJS)$(STEPHANETESTOBJS))
 
-TARGETS = directtest2k
+TARGETS = directtest2k stephanetest
 
 all: $(TARGETS)
 
@@ -91,6 +92,9 @@ $(ALLOBJS): %.o: %.c
 $(YAFFSDIRECTSYMLINKS):
 	ln -s ../$@ $@
 
+
+stephanetest: $(YAFFSDIRECTSYMLINKS) $(STEPHANETESTOBJS)
+	gcc -o $@ $(STEPHANETESTOBJS)
 
 directtest2k: $(YAFFSDIRECTSYMLINKS) $(DIRECTTESTOBJS)
 	gcc -o $@ $(DIRECTTESTOBJS)
