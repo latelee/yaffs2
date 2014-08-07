@@ -163,6 +163,7 @@ union yaffs_tags_union {
 enum yaffs_ecc_result {
 	YAFFS_ECC_RESULT_UNKNOWN,
 	YAFFS_ECC_RESULT_NO_ERROR,
+	YAFFS_ECC_RESULT_REFRESH,
 	YAFFS_ECC_RESULT_FIXED,
 	YAFFS_ECC_RESULT_UNFIXED
 };
@@ -940,7 +941,8 @@ void yaffs_chunk_del(struct yaffs_dev *dev, int chunk_id, int mark_flash,
 		     int lyn);
 int yaffs_check_ff(u8 *buffer, int n_bytes);
 void yaffs_handle_chunk_error(struct yaffs_dev *dev,
-			      struct yaffs_block_info *bi);
+			      struct yaffs_block_info *bi,
+			      enum yaffs_ecc_result err_type);
 
 u8 *yaffs_get_temp_buffer(struct yaffs_dev *dev);
 void yaffs_release_temp_buffer(struct yaffs_dev *dev, u8 *buffer);

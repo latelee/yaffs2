@@ -211,11 +211,18 @@ static void yaffs_handle_chunk_update(struct yaffs_dev *dev, int nand_chunk,
 }
 
 void yaffs_handle_chunk_error(struct yaffs_dev *dev,
-			      struct yaffs_block_info *bi)
+			      struct yaffs_block_info *bi,
+			      enum yaffs_ecc_result err_type)
 {
-	if (!bi->gc_prioritise) {
-		bi->gc_prioritise = 1;
-		dev->has_pending_prioritised_gc = 1;
+	if (bi->gc_prioritise)
+		return;
+
+	/* We need to refresh this data by gc'ing the block soon. */
+	bi->gc_prioritise = 1;
+	dev->has_pending_prioritised_gc = 1;
+
+	/* If it was more than just refresh request then consider retirement. */
+	if (err_type > YAFFS_ECC_RESULT_REFRESH) {
 		bi->chunk_error_strikes++;
 
 		if (bi->chunk_error_strikes > 3) {
@@ -233,7 +240,7 @@ static void yaffs_handle_chunk_wr_error(struct yaffs_dev *dev, int nand_chunk,
 	int flash_block = nand_chunk / dev->param.chunks_per_block;
 	struct yaffs_block_info *bi = yaffs_get_block_info(dev, flash_block);
 
-	yaffs_handle_chunk_error(dev, bi);
+	yaffs_handle_chunk_error(dev, bi, YAFFS_ECC_RESULT_FIXED);
 
 	if (erased_ok) {
 		/* Was an actual write failure,
