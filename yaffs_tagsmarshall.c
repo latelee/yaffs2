@@ -118,7 +118,7 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 		dev->n_ecc_unfixed++;
 	}
 
-	if (tags && ecc_result == -YAFFS_ECC_RESULT_FIXED) {
+	if (tags && ecc_result == YAFFS_ECC_RESULT_FIXED) {
 		if (tags->ecc_result <= YAFFS_ECC_RESULT_NO_ERROR)
 			tags->ecc_result = YAFFS_ECC_RESULT_FIXED;
 		dev->n_ecc_fixed++;

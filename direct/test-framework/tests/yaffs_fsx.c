@@ -24,12 +24,12 @@
  *      yaffs direct. Seek out the original fsx.c if you want to do anything
  *	else.
  *
- *	
+ *
  *
  *	File:	fsx.c
  *	Author:	Avadis Tevanian, Jr.
  *
- *	File system exerciser. 
+ *	File system exerciser.
  *
  *	Rewrite and enhancements 1998-2001 Conrad Minshall -- conrad@mac.com
  *
@@ -123,7 +123,7 @@ unsigned long	simulatedopcount = 0;	/* -b flag */
 int	closeprob = 0;			/* -c flag */
 int	debug = 0;			/* -d flag */
 unsigned long	debugstart = 0;		/* -D flag */
-unsigned long	maxfilelen = 256 * 1024;	/* -l flag */
+long int maxfilelen = 256 * 1024;	/* -l flag */
 int	sizechecks = 1;			/* -n flag disables them */
 int	maxoplen = 64 * 1024;		/* -o flag */
 int	quiet = 0;			/* -q flag */
@@ -243,7 +243,7 @@ logdump(void)
 		lp = &oplog[i];
 		if ((closeopen = lp->operation < 0))
 			lp->operation = ~ lp->operation;
-			
+
 		switch (lp->operation) {
 		case OP_MAPREAD:
 			prt("MAPREAD\t0x%x thru 0x%x\t(0x%x bytes)",
@@ -333,7 +333,7 @@ save_buffer(char *buffer, off_t bufferlength, int fd)
 	ret = yaffs_lseek(fd, (off_t)0, SEEK_SET);
 	if (ret == (off_t)-1)
 		prterr("save_buffer: lseek 0");
-	
+
 	byteswritten = yaffs_write(fd, buffer, (size_t)bufferlength);
 	if (byteswritten != bufferlength) {
 		if (byteswritten == -1)
@@ -350,7 +350,7 @@ void
 report_failure(int status)
 {
 	logdump();
-	
+
 	if (fsxgoodfd) {
 		if (good_buf) {
 			save_buffer(good_buf, file_size, fsxgoodfd);
@@ -449,10 +449,10 @@ check_trunc_hack(void)
 
 
 void
-doread(unsigned offset, unsigned size)
+doread(unsigned offset, int size)
 {
 	off_t ret;
-	unsigned iret;
+	int iret;
 
 	offset -= offset % readbdy;
 	if (size == 0) {
@@ -506,7 +506,7 @@ void
 gendata(char *original_buf, char *good_buf, unsigned offset, unsigned size)
 {
 	while (size--) {
-		good_buf[offset] = testcalls % 256; 
+		good_buf[offset] = testcalls % 256;
 		if (offset % 2)
 			good_buf[offset] += original_buf[offset];
 		offset++;
@@ -515,10 +515,10 @@ gendata(char *original_buf, char *good_buf, unsigned offset, unsigned size)
 
 
 void
-dowrite(unsigned offset, unsigned size)
+dowrite(unsigned offset, int size)
 {
 	off_t ret;
-	unsigned iret;
+	int iret;
 
 	offset -= offset % writebdy;
 	if (size == 0) {
@@ -590,7 +590,7 @@ dotruncate(unsigned size)
 
 	if (testcalls <= simulatedopcount)
 		return;
-	
+
 	if ((progressinterval && testcalls % progressinterval == 0) ||
 	    (debug && (monitorstart == -1 || monitorend == -1 ||
 		       size <= monitorend)))
@@ -631,7 +631,7 @@ writefileimage()
 
 void
 docloseopen(void)
-{ 
+{
 	if (testcalls <= simulatedopcount)
 		return;
 
@@ -652,10 +652,10 @@ docloseopen(void)
 void
 yaffs_fsx_do_op(void)
 {
-	unsigned long	offset;
-	unsigned long	size = maxoplen;
-	unsigned long	rv = random();
-	unsigned long	op = rv % (3 + !lite + mapped_writes);
+	long int	offset;
+	long int	size = maxoplen;
+	long int	rv = random();
+	long int 	op = rv % (3 + !lite + mapped_writes);
 
 	/* turn off the map read if necessary */
 
@@ -812,7 +812,7 @@ yaffs_fsx_init(const char *mount_pt)
 	strcpy(mount_name,mount_pt);
 	strcpy(fname,mount_name);
 	strcat(fname,"/fsxdata");
-	
+
 #if 0
 	signal(SIGHUP,	cleanup);
 	signal(SIGINT,	cleanup);
@@ -882,11 +882,11 @@ yaffs_fsx_init(const char *mount_pt)
 				     (unsigned)written, maxfilelen);
 			EXIT(98);
 		}
-	} else 
+	} else
 		check_trunc_hack();
-		
+
 	printf("yaffs_fsx_init done\n");
-		
+
 	return 0;
 }
 
@@ -897,9 +897,9 @@ int yaffs_fsx_complete(void)
 		prterr("close");
 		report_failure(99);
 	}
-	
+
 	yaffs_close(fsxgoodfd);
-	
+
 	prt("All operations completed A-OK!\n");
 
 	EXIT(0);
@@ -913,6 +913,6 @@ yaffs_fsx_main(const char *mount_pt, int numops)
 	while (numops == -1 || numops--)
 		yaffs_fsx_do_op();
 	yaffs_fsx_complete();
-	
+
 	return 0;
 }

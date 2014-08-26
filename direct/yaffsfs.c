@@ -1855,7 +1855,6 @@ static int yaffsfs_DoUtime(struct yaffs_obj *obj,
 			   const struct yaffs_utimbuf *buf)
 {
 	int retVal = -1;
-	struct yaffs_utimbuf local;
 
 	obj = yaffs_get_equivalent_obj(obj);
 
@@ -1865,20 +1864,24 @@ static int yaffsfs_DoUtime(struct yaffs_obj *obj,
 	}
 
 #if !CONFIG_YAFFS_WINCE
-	if (!buf) {
-		local.actime = Y_CURRENT_TIME;
-		local.modtime = local.actime;
-		buf = &local;
-	}
+	{
+		struct yaffs_utimbuf local;
 
-	if (obj) {
-		int result;
+		if (!buf) {
+			local.actime = Y_CURRENT_TIME;
+			local.modtime = local.actime;
+			buf = &local;
+		}
 
-		obj->yst_atime = buf->actime;
-		obj->yst_mtime = buf->modtime;
-		obj->dirty = 1;
-		result = yaffs_flush_file(obj, 0, 0, 0);
-		retVal = result == YAFFS_OK ? 0 : -1;
+		if (obj) {
+			int result;
+
+			obj->yst_atime = buf->actime;
+			obj->yst_mtime = buf->modtime;
+			obj->dirty = 1;
+			result = yaffs_flush_file(obj, 0, 0, 0);
+			retVal = result == YAFFS_OK ? 0 : -1;
+		}
 	}
 #endif
 

@@ -691,7 +691,7 @@ static void yaffs_load_oh_from_name(struct yaffs_dev *dev, YCHAR *oh_name,
 			char *ascii_oh_name = (char *)oh_name;
 			int n = YAFFS_MAX_NAME_LENGTH - 1;
 			while (n > 0 && *name) {
-				*ascii_oh_name = *name;
+				*ascii_oh_name = (char)*name;
 				name++;
 				ascii_oh_name++;
 				n--;
@@ -871,7 +871,7 @@ u32 yaffs_get_group_base(struct yaffs_dev *dev, struct yaffs_tnode *tn,
  * in the tree. 0 means only the level 0 tnode is in the tree.
  */
 
-/* FindLevel0Tnode finds the level 0 tnode, if one exists. */
+/* yaffs_find_tnode_0 finds the level 0 tnode, if one exists. */
 struct yaffs_tnode *yaffs_find_tnode_0(struct yaffs_dev *dev,
 				       struct yaffs_file_var *file_struct,
 				       u32 chunk_id)
@@ -4823,7 +4823,7 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 	if (bits <= dev->tnode_width)
 		dev->chunk_grp_bits = 0;
 	else
-		dev->chunk_grp_bits = bits - dev->tnode_width;
+		dev->chunk_grp_bits = (u16)(bits - dev->tnode_width);
 
 	dev->tnode_size = (dev->tnode_width * YAFFS_NTNODES_LEVEL0) / 8;
 	if (dev->tnode_size < sizeof(struct yaffs_tnode))
