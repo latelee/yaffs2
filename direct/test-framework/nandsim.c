@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "yportenv.h"
+
 static int nandsim_debug = 0;
 
 #define debug(n, fmt, ...) \
@@ -94,6 +96,8 @@ static void check_last(struct nandsim_private *ns,
 
 static void idle(struct nandsim_private *ns, int line)
 {
+	YAFFS_UNUSED(line);
+
 	ns->read_offset = -1;
 	ns->write_offset = -1;
 	ns->addr_offset = -1;
@@ -110,6 +114,7 @@ static void expect_address(struct nandsim_private *ns,
 			int nbytes, int line)
 {
 	int from;
+
 	switch (nbytes) {
 	case 2:
 	case 5: /* contains an offset */
@@ -175,27 +180,34 @@ static void set_offset(struct nandsim_private *ns)
 static void load_read_buffer(struct nandsim_private *ns)
 {
 	int addr = get_page_address(ns);
+
 	debug(1, "Store read at address %d\n", addr);
 	ns->store->retrieve(ns->store, addr,ns->buffer);
 }
 static void save_write_buffer(struct nandsim_private *ns)
 {
 	int addr = get_page_address(ns);
+
 	debug(1, "Store write at address %d\n", addr);
 	ns->store->store(ns->store, addr, ns->buffer);
 }
 
 static void check_read_buffer(struct nandsim_private *ns, int line)
 {
+	YAFFS_UNUSED(ns);
+	YAFFS_UNUSED(line);
 }
 
 static void end_cmd(struct nandsim_private *ns, int line)
 {
+	YAFFS_UNUSED(line);
 	ns->last_cmd_byte = 0xff;
 }
 
 static void set_busy(struct nandsim_private *ns, int cycles, int line)
 {
+	YAFFS_UNUSED(line);
+
 	ns->busy_count = cycles;
 }
 
@@ -380,11 +392,13 @@ static void read_status(struct nandsim_private *ns)
 
 static void read_id(struct nandsim_private *ns)
 {
+	YAFFS_UNUSED(ns);
 }
 
 
 static void unsupported(struct nandsim_private *ns)
 {
+	YAFFS_UNUSED(ns);
 }
 
 static void nandsim_cl_write(struct nandsim_private *ns, unsigned char val)
@@ -447,7 +461,7 @@ static void nandsim_al_write(struct nandsim_private *ns, unsigned char val)
 	check_not_busy(ns, __LINE__);
 	if(ns->addr_expected < 1 ||
 		ns->addr_offset < 0 ||
-		ns->addr_offset >= sizeof(ns->addr_buffer)){
+		ns->addr_offset >= (int)sizeof(ns->addr_buffer)){
 		debug(1, "Address write when not expected\n");
 	} else {
 		debug(1, "Address write when expecting %d bytes\n",
@@ -461,7 +475,7 @@ static void nandsim_al_write(struct nandsim_private *ns, unsigned char val)
 	}
 }
 
-static void nandsim_dl_write(struct nandsim_private *ns, 
+static void nandsim_dl_write(struct nandsim_private *ns,
 				unsigned val,
 				int bus_width_shift)
 {

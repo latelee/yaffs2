@@ -203,7 +203,10 @@ static void dump_directory_tree_worker(const char *dname,int recursive)
 
 			yaffs_lstat(str,&s);
 
-			printf("%s inode %ld %d obj %x length %d mode %X ",str, de->d_ino, s.st_ino,de->d_dont_use,(int)s.st_size,s.st_mode);\
+			printf("%s inode %ld obj %d %p length %d mode %X ",
+				str, de->d_ino, s.st_ino,
+				de->d_dont_use, (int)s.st_size, s.st_mode);
+
 			if(de->d_ino != s.st_ino){
 				printf(" \n\n!!!! HEY inode mismatch\n\n");
 				error_line = __LINE__;

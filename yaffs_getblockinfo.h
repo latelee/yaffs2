@@ -21,11 +21,11 @@
 
 /* Function to manipulate block info */
 static inline struct yaffs_block_info *yaffs_get_block_info(struct yaffs_dev
-							      *dev, int blk)
+							      *dev, u32 blk)
 {
 	if (blk < dev->internal_start_block || blk > dev->internal_end_block) {
 		yaffs_trace(YAFFS_TRACE_ERROR,
-			"**>> yaffs: get_block_info block %d is not valid",
+			"**>> yaffs: get_block_info block %u is not valid",
 			blk);
 		BUG();
 	}

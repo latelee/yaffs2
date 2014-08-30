@@ -77,10 +77,10 @@ void yaffs_verify_blk(struct yaffs_dev *dev, struct yaffs_block_info *bi, int n)
 	actually_used = bi->pages_in_use - bi->soft_del_pages;
 
 	if (bi->pages_in_use < 0 ||
-	    bi->pages_in_use > dev->param.chunks_per_block ||
+	    bi->pages_in_use > (int)dev->param.chunks_per_block ||
 	    bi->soft_del_pages < 0 ||
-	    bi->soft_del_pages > dev->param.chunks_per_block ||
-	    actually_used < 0 || actually_used > dev->param.chunks_per_block)
+	    bi->soft_del_pages > (int)dev->param.chunks_per_block ||
+	    actually_used < 0 || actually_used > (int)dev->param.chunks_per_block)
 		yaffs_trace(YAFFS_TRACE_VERIFY,
 			"Block %d has illegal values pages_in_used %d soft_del_pages %d",
 			n, bi->pages_in_use, bi->soft_del_pages);
@@ -110,7 +110,7 @@ void yaffs_verify_collected_blk(struct yaffs_dev *dev,
 
 void yaffs_verify_blocks(struct yaffs_dev *dev)
 {
-	int i;
+	u32 i;
 	int state_count[YAFFS_NUMBER_OF_BLOCK_STATES];
 	int illegal_states = 0;
 
@@ -224,8 +224,7 @@ void yaffs_verify_file(struct yaffs_obj *obj)
 {
 	u32 x;
 	int required_depth;
-	int actual_depth;
-	int last_chunk;
+	u32 last_chunk;
 	u32 offset_in_chunk;
 	u32 the_chunk;
 
@@ -255,8 +254,6 @@ void yaffs_verify_file(struct yaffs_obj *obj)
 		x >>= YAFFS_TNODES_INTERNAL_BITS;
 		required_depth++;
 	}
-
-	actual_depth = obj->variant.file_variant.top_level;
 
 	/* Check that the chunks in the tnode tree are all correct.
 	 * We do this by scanning through the tnode tree and

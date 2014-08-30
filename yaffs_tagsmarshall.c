@@ -124,7 +124,7 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 		dev->n_ecc_fixed++;
 	}
 
-	if (ecc_result < YAFFS_ECC_RESULT_UNFIXED)
+	if (retval == YAFFS_OK && ecc_result < YAFFS_ECC_RESULT_UNFIXED)
 		return YAFFS_OK;
 	else
 		return YAFFS_FAIL;

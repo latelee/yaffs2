@@ -41,7 +41,7 @@
  */
 void yaffs_calc_oldest_dirty_seq(struct yaffs_dev *dev)
 {
-	int i;
+	u32 i;
 	unsigned seq;
 	unsigned block_no = 0;
 	struct yaffs_block_info *b;
@@ -55,7 +55,7 @@ void yaffs_calc_oldest_dirty_seq(struct yaffs_dev *dev)
 	for (i = dev->internal_start_block; i <= dev->internal_end_block; i++) {
 		if (b->block_state == YAFFS_BLOCK_STATE_FULL &&
 		    (b->pages_in_use - b->soft_del_pages) <
-		    dev->param.chunks_per_block &&
+		    (int)dev->param.chunks_per_block &&
 		    b->seq_number < seq) {
 			seq = b->seq_number;
 			block_no = i;
@@ -309,7 +309,7 @@ static void yaffs_checkpt_dev_to_dev(struct yaffs_dev *dev,
 static int yaffs2_wr_checkpt_dev(struct yaffs_dev *dev)
 {
 	struct yaffs_checkpt_dev cp;
-	u32 n_bytes;
+	int n_bytes;
 	u32 n_blocks = dev->internal_end_block - dev->internal_start_block + 1;
 	int ok;
 
@@ -337,7 +337,7 @@ static int yaffs2_wr_checkpt_dev(struct yaffs_dev *dev)
 static int yaffs2_rd_checkpt_dev(struct yaffs_dev *dev)
 {
 	struct yaffs_checkpt_dev cp;
-	u32 n_bytes;
+	int n_bytes;
 	u32 n_blocks =
 	    (dev->internal_end_block - dev->internal_start_block + 1);
 	int ok;
@@ -473,7 +473,7 @@ static int yaffs2_checkpt_tnode_worker(struct yaffs_obj *in,
 			sizeof(base_offset));
 	if (ok)
 		ok = (yaffs2_checkpt_wr(dev, tn, dev->tnode_size) ==
-			dev->tnode_size);
+			(int)dev->tnode_size);
 
 	return ok;
 }
@@ -516,7 +516,7 @@ static int yaffs2_rd_checkpt_tnodes(struct yaffs_obj *obj)
 		tn = yaffs_get_tnode(dev);
 		if (tn)
 			ok = (yaffs2_checkpt_rd(dev, tn, dev->tnode_size) ==
-				dev->tnode_size);
+				(int)dev->tnode_size);
 		else
 			ok = 0;
 
@@ -606,7 +606,7 @@ static int yaffs2_rd_checkpt_objs(struct yaffs_dev *dev)
 			cp.obj_id, cp.parent_id, cp.variant_type,
 			cp.hdr_chunk);
 
-		if (ok && cp.obj_id == ~0) {
+		if (ok && cp.obj_id == (u32)(~0)) {
 			done = 1;
 		} else if (ok) {
 			obj =
@@ -881,7 +881,7 @@ int yaffs2_handle_hole(struct yaffs_obj *obj, loff_t new_size)
 
 		while (increase > 0 && small_increase_ok) {
 			this_write = increase;
-			if (this_write > dev->data_bytes_per_chunk)
+			if (this_write > (int)dev->data_bytes_per_chunk)
 				this_write = dev->data_bytes_per_chunk;
 			written =
 			    yaffs_do_file_wr(obj, local_buffer, pos, this_write,
@@ -946,7 +946,6 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 	int is_shrink;
 	int is_unlinked;
 	struct yaffs_ext_tags tags;
-	int result;
 	int alloc_failed = 0;
 	int chunk = blk * dev->param.chunks_per_block + chunk_in_block;
 	struct yaffs_file_var *file_var;
@@ -954,12 +953,12 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 	struct yaffs_symlink_var *sl_var;
 
 	if (summary_available) {
-		result = yaffs_summary_fetch(dev, &tags, chunk_in_block);
+		yaffs_summary_fetch(dev, &tags, chunk_in_block);
 		tags.seq_number = bi->seq_number;
 	}
 
 	if (!summary_available || tags.obj_id == 0) {
-		result = yaffs_rd_chunk_tags_nand(dev, chunk, NULL, &tags);
+		yaffs_rd_chunk_tags_nand(dev, chunk, NULL, &tags);
 		dev->tags_used++;
 	} else {
 		dev->summary_used++;
@@ -1114,7 +1113,7 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 			 * invalid data until needed.
 			 */
 
-			result = yaffs_rd_chunk_tags_nand(dev,
+			yaffs_rd_chunk_tags_nand(dev,
 						  chunk,
 						  chunk_data,
 						  NULL);
@@ -1344,14 +1343,13 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 
 int yaffs2_scan_backwards(struct yaffs_dev *dev)
 {
-	int blk;
+	u32 blk;
 	int block_iter;
 	int start_iter;
 	int end_iter;
 	int n_to_scan = 0;
 	enum yaffs_block_state state;
 	int c;
-	int deleted;
 	LIST_HEAD(hard_list);
 	struct yaffs_block_info *bi;
 	u32 seq_number;
@@ -1469,7 +1467,6 @@ int yaffs2_scan_backwards(struct yaffs_dev *dev)
 		/* get the block to scan in the correct order */
 		blk = block_index[block_iter].block;
 		bi = yaffs_get_block_info(dev, blk);
-		deleted = 0;
 
 		summary_available = yaffs_summary_read(dev, dev->sum_tags, blk);
 

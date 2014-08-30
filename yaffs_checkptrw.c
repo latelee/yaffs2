@@ -16,7 +16,7 @@
 
 struct yaffs_checkpt_chunk_hdr {
 	int version;
-	int seq;
+	u32 seq;
 	u32 sum;
 	u32 xor;
 } ;
@@ -72,7 +72,7 @@ static int yaffs2_checkpt_space_ok(struct yaffs_dev *dev)
 
 static int yaffs_checkpt_erase(struct yaffs_dev *dev)
 {
-	int i;
+	u32 i;
 
 	if (!dev->drv.drv_erase_fn)
 		return 0;
@@ -111,7 +111,7 @@ static int yaffs_checkpt_erase(struct yaffs_dev *dev)
 
 static void yaffs2_checkpt_find_erased_block(struct yaffs_dev *dev)
 {
-	int i;
+	u32 i;
 	int blocks_avail = dev->n_erased_blocks - dev->param.n_reserved_blocks;
 
 	yaffs_trace(YAFFS_TRACE_CHECKPOINT,
@@ -119,7 +119,7 @@ static void yaffs2_checkpt_find_erased_block(struct yaffs_dev *dev)
 		dev->n_erased_blocks, dev->param.n_reserved_blocks,
 		blocks_avail, dev->checkpt_next_block);
 
-	if (dev->checkpt_next_block >= 0 &&
+	if (dev->checkpt_next_block >= dev->internal_start_block &&
 	    dev->checkpt_next_block <= dev->internal_end_block &&
 	    blocks_avail > 0) {
 
@@ -139,13 +139,13 @@ static void yaffs2_checkpt_find_erased_block(struct yaffs_dev *dev)
 	}
 	yaffs_trace(YAFFS_TRACE_CHECKPOINT, "out of checkpt blocks");
 
-	dev->checkpt_next_block = -1;
-	dev->checkpt_cur_block = -1;
+	dev->checkpt_next_block = 0;
+	dev->checkpt_cur_block = 0;
 }
 
 static void yaffs2_checkpt_find_block(struct yaffs_dev *dev)
 {
-	int i;
+	u32 i;
 	struct yaffs_ext_tags tags;
 
 	yaffs_trace(YAFFS_TRACE_CHECKPOINT,
@@ -155,7 +155,7 @@ static void yaffs2_checkpt_find_block(struct yaffs_dev *dev)
 	if (dev->blocks_in_checkpt < dev->checkpt_max_blocks)
 		for (i = dev->checkpt_next_block; i <= dev->internal_end_block;
 		     i++) {
-			int chunk = i * dev->param.chunks_per_block;
+			u32 chunk = i * dev->param.chunks_per_block;
 			enum yaffs_block_state state;
 			u32 seq;
 
@@ -189,8 +189,8 @@ static void yaffs2_checkpt_find_block(struct yaffs_dev *dev)
 
 	yaffs_trace(YAFFS_TRACE_CHECKPOINT, "found no more checkpt blocks");
 
-	dev->checkpt_next_block = -1;
-	dev->checkpt_cur_block = -1;
+	dev->checkpt_next_block = 0;
+	dev->checkpt_cur_block = 0;
 }
 
 int yaffs2_checkpt_open(struct yaffs_dev *dev, int writing)
@@ -219,8 +219,8 @@ int yaffs2_checkpt_open(struct yaffs_dev *dev, int writing)
 	dev->checkpt_byte_count = 0;
 	dev->checkpt_sum = 0;
 	dev->checkpt_xor = 0;
-	dev->checkpt_cur_block = -1;
-	dev->checkpt_cur_chunk = -1;
+	dev->checkpt_cur_block = 0;
+	dev->checkpt_cur_chunk = 0;
 	dev->checkpt_next_block = dev->internal_start_block;
 
 	if (writing) {
@@ -264,12 +264,12 @@ static int yaffs2_checkpt_flush_buffer(struct yaffs_dev *dev)
 	int offset_chunk;
 	struct yaffs_ext_tags tags;
 
-	if (dev->checkpt_cur_block < 0) {
+	if (dev->checkpt_cur_block < dev->internal_start_block) {
 		yaffs2_checkpt_find_erased_block(dev);
 		dev->checkpt_cur_chunk = 0;
 	}
 
-	if (dev->checkpt_cur_block < 0)
+	if (dev->checkpt_cur_block < dev->internal_start_block)
 		return 0;
 
 	tags.is_deleted = 0;
@@ -305,7 +305,7 @@ static int yaffs2_checkpt_flush_buffer(struct yaffs_dev *dev)
 	dev->checkpt_cur_chunk++;
 	if (dev->checkpt_cur_chunk >= dev->param.chunks_per_block) {
 		dev->checkpt_cur_chunk = 0;
-		dev->checkpt_cur_block = -1;
+		dev->checkpt_cur_block = 0;
 	}
 	memset(dev->checkpt_buffer, 0, dev->data_bytes_per_chunk);
 
@@ -337,8 +337,7 @@ int yaffs2_checkpt_wr(struct yaffs_dev *dev, const void *data, int n_bytes)
 		data_bytes++;
 		dev->checkpt_byte_count++;
 
-		if (dev->checkpt_byte_offs < 0 ||
-		    dev->checkpt_byte_offs >= dev->data_bytes_per_chunk)
+		if (dev->checkpt_byte_offs >= dev->data_bytes_per_chunk)
 			ok = yaffs2_checkpt_flush_buffer(dev);
 	}
 
@@ -362,15 +361,16 @@ int yaffs2_checkpt_rd(struct yaffs_dev *dev, void *data, int n_bytes)
 
 	while (i < n_bytes && ok) {
 
-		if (dev->checkpt_byte_offs < 0 ||
-		    dev->checkpt_byte_offs >= dev->data_bytes_per_chunk) {
+		if (dev->checkpt_byte_offs >= dev->data_bytes_per_chunk) {
 
-			if (dev->checkpt_cur_block < 0) {
+			if (dev->checkpt_cur_block <
+			    dev->internal_start_block) {
 				yaffs2_checkpt_find_block(dev);
 				dev->checkpt_cur_chunk = 0;
 			}
 
-			if (dev->checkpt_cur_block < 0) {
+			if (dev->checkpt_cur_block <
+			    dev->internal_start_block) {
 				ok = 0;
 				break;
 			}
@@ -402,9 +402,9 @@ int yaffs2_checkpt_rd(struct yaffs_dev *dev, void *data, int n_bytes)
 			dev->checkpt_page_seq++;
 			dev->checkpt_cur_chunk++;
 
-			if (dev->checkpt_cur_chunk >=
+			if (dev->checkpt_cur_chunk >
 					dev->param.chunks_per_block)
-				dev->checkpt_cur_block = -1;
+				dev->checkpt_cur_block = 0;
 
 		}
 
@@ -431,8 +431,8 @@ int yaffs_checkpt_close(struct yaffs_dev *dev)
 	} else if (dev->checkpt_block_list) {
 		for (i = 0;
 		     i < dev->blocks_in_checkpt &&
-		     dev->checkpt_block_list[i] >= 0; i++) {
-			int blk = dev->checkpt_block_list[i];
+		     dev->checkpt_block_list[i] > 0; i++) {
+			u32 blk = dev->checkpt_block_list[i];
 			struct yaffs_block_info *bi = NULL;
 
 			if (dev->internal_start_block <= blk &&

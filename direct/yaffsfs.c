@@ -43,7 +43,7 @@ static yaffs_DIR *yaffsfs_opendir_reldir_no_lock(
 				struct yaffs_obj *reldir, const YCHAR *dirname);
 static int yaffsfs_closedir_no_lock(yaffs_DIR *dirent);
 
-unsigned int yaffs_wr_attempts;
+int yaffs_wr_attempts;
 
 /*
  * Handle management.
@@ -783,7 +783,7 @@ int yaffs_dup(int handle)
 
 static int yaffsfs_TooManyObjects(struct yaffs_dev *dev)
 {
-	int current_objects = dev->n_obj - dev->n_deleted_files;
+	u32 current_objects = dev->n_obj - dev->n_deleted_files;
 
 	if (dev->param.max_objects && current_objects > dev->param.max_objects)
 		return 1;
@@ -1139,7 +1139,7 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 	Y_LOFF_T startPos = 0;
 	Y_LOFF_T endPos = 0;
 	int nRead = 0;
-	int nToRead = 0;
+	unsigned int nToRead = 0;
 	int totalRead = 0;
 	Y_LOFF_T maxRead;
 	u8 *buf = (u8 *) vbuf;
@@ -1159,9 +1159,6 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 		totalRead = -1;
 	} else if (!fd->reading) {
 		/* Not a reading handle */
-		yaffsfs_SetError(-EINVAL);
-		totalRead = -1;
-	} else if (nbyte > YAFFS_MAX_FILE_SIZE) {
 		yaffsfs_SetError(-EINVAL);
 		totalRead = -1;
 	} else {
@@ -1185,7 +1182,6 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 		endPos = pos + nbyte;
 
 		if (pos < 0 || pos > YAFFS_MAX_FILE_SIZE ||
-		    nbyte > YAFFS_MAX_FILE_SIZE ||
 		    endPos < 0 || endPos > YAFFS_MAX_FILE_SIZE) {
 			totalRead = -1;
 			nbyte = 0;
@@ -1213,7 +1209,7 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 				buf += nRead;
 			}
 
-			if (nRead == nToRead)
+			if (nRead == (int)nToRead)
 				nbyte -= nRead;
 			else
 				nbyte = 0;	/* no more to read */
@@ -1263,7 +1259,7 @@ static int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
 	int nWritten = 0;
 	int totalWritten = 0;
 	int write_trhrough = 0;
-	int nToWrite = 0;
+	unsigned int nToWrite = 0;
 	const u8 *buf = (const u8 *)vbuf;
 
 	if (yaffsfs_CheckMemRegion(vbuf, nbyte, 0) < 0) {
@@ -1298,7 +1294,6 @@ static int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
 		endPos = pos + nbyte;
 
 		if (pos < 0 || pos > YAFFS_MAX_FILE_SIZE ||
-		    nbyte > YAFFS_MAX_FILE_SIZE ||
 		    endPos < 0 || endPos > YAFFS_MAX_FILE_SIZE) {
 			totalWritten = -1;
 			nbyte = 0;
@@ -1328,7 +1323,7 @@ static int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
 				buf += nWritten;
 			}
 
-			if (nWritten == nToWrite)
+			if (nWritten == (int)nToWrite)
 				nbyte -= nToWrite;
 			else
 				nbyte = 0;
@@ -1714,7 +1709,7 @@ static int yaffsfs_DoStat(struct yaffs_obj *obj, struct yaffs_stat *buf)
 	obj = yaffs_get_equivalent_obj(obj);
 
 	if (obj && buf) {
-		buf->st_dev = (int)obj->my_dev->os_context;
+		buf->st_dev = 0;
 		buf->st_ino = obj->obj_id;
 		buf->st_mode = obj->yst_mode & ~S_IFMT;
 
@@ -3491,7 +3486,7 @@ struct yaffs_dirent *yaffsfs_readdir_no_lock(yaffs_DIR * dirp)
 		if (dsc->nextReturn) {
 			dsc->de.d_ino =
 			    yaffs_get_equivalent_obj(dsc->nextReturn)->obj_id;
-			dsc->de.d_dont_use = (unsigned)dsc->nextReturn;
+			dsc->de.d_dont_use = dsc->nextReturn;
 			dsc->de.d_off = dsc->offset++;
 			yaffs_get_obj_name(dsc->nextReturn,
 					   dsc->de.d_name, NAME_MAX);

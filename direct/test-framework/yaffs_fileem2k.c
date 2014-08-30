@@ -110,12 +110,6 @@ static void yflash2_MaybePowerFail(unsigned int nand_chunk, int failPoint)
   }
 }
 
-
-
-
-
-static u8 localBuffer[PAGE_SIZE];
-
 static char *NToName(char *buf,int n)
 {
 	sprintf(buf,"emfile-2k-%d",n);
@@ -154,23 +148,16 @@ static int  CheckInit(void)
 {
 	static int initialised = 0;
 	int i;
-
 	int blk;
 
-
 	if(initialised)
-	{
 		return YAFFS_OK;
-	}
 
 	initialised = 1;
-
 
 	srand(random_seed);
 	remaining_ops = (rand() % 1000) * 5;
   	memset(dummyBuffer,0xff,sizeof(dummyBuffer));
-
-
 
 	filedisk.nBlocks = SIZE_IN_MB * BLOCKS_PER_MB;
 
@@ -179,7 +166,6 @@ static int  CheckInit(void)
 
 	for(i = 0,blk = 0; blk < filedisk.nBlocks; blk+=BLOCKS_PER_HANDLE,i++)
 		filedisk.handle[i] = GetBlockFileHandle(i);
-
 
 	return 1;
 }
@@ -277,7 +263,7 @@ static int yflash2_ReadChunk(struct yaffs_dev *dev, int nand_chunk,
 
 static int yflash2_EraseBlock(struct yaffs_dev *dev, int block_no)
 {
-	int i;
+	u32 i;
 	int h;
 
 	CheckInit();
@@ -292,18 +278,13 @@ static int yflash2_EraseBlock(struct yaffs_dev *dev, int block_no)
 
 		u8 pg[PAGE_SIZE];
 		int syz = PAGE_SIZE;
-		int pos;
 
 		memset(pg,0xff,syz);
 
-
 		h = filedisk.handle[(block_no / ( BLOCKS_PER_HANDLE))];
-		lseek(h,((block_no % BLOCKS_PER_HANDLE) * dev->param.chunks_per_block) * PAGE_SIZE,SEEK_SET);
+		lseek(h,((block_no % BLOCKS_PER_HANDLE) * dev->param.chunks_per_block) * PAGE_SIZE, SEEK_SET);
 		for(i = 0; i < dev->param.chunks_per_block; i++)
-		{
 			write(h,pg,PAGE_SIZE);
-		}
-		pos = lseek(h, 0,SEEK_CUR);
 
 		return YAFFS_OK;
 	}
@@ -332,8 +313,8 @@ static int yflash2_MarkBad(struct yaffs_dev *dev, int block_no)
 
 static int yflash2_CheckBad(struct yaffs_dev *dev, int block_no)
 {
-	(void) dev;
-	(void) block_no;
+	YAFFS_UNUSED(dev);
+	YAFFS_UNUSED(block_no);
 
 	return YAFFS_OK;
 }

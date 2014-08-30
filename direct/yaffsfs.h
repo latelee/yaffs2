@@ -46,7 +46,7 @@ struct yaffs_dirent {
 	unsigned short d_reclen;	/* length of this dirent */
 	YUCHAR d_type;			/* type of this record */
 	YCHAR d_name[NAME_MAX+1];	/* file name (null-terminated) */
-	unsigned d_dont_use;		/* debug: not for public consumption */
+	void *d_dont_use;			/* debug pointer used by test harness */
 };
 
 typedef struct opaque_structure yaffs_DIR;
@@ -54,7 +54,7 @@ typedef struct opaque_structure yaffs_DIR;
 
 
 struct yaffs_stat {
-	int		st_dev;		/* device */
+	int		st_dev;		/* device - unused*/
 	int		st_ino;		/* inode */
 	unsigned	st_mode;	/* protection */
 	int		st_nlink;	/* number of hard links */

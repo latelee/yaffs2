@@ -27,6 +27,8 @@ typedef signed int s32;
 #endif
 
 
+#define YAFFS_UNUSED(x) (void)(x)
+
 #ifdef CONFIG_YAFFS_PROVIDE_DEFS
 /* File types */
 

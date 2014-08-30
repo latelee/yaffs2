@@ -183,7 +183,7 @@ int yaffs_summary_read(struct yaffs_dev *dev,
 	u8 *buffer;
 	u8 *sum_buffer = (u8 *)st;
 	int n_bytes;
-	int chunk_id;
+	u32 chunk_id;
 	int chunk_in_nand;
 	int chunk_in_block;
 	int result;
@@ -292,7 +292,7 @@ int yaffs_summary_fetch(struct yaffs_dev *dev,
 void yaffs_summary_gc(struct yaffs_dev *dev, int blk)
 {
 	struct yaffs_block_info *bi = yaffs_get_block_info(dev, blk);
-	int i;
+	u32 i;
 
 	if (!bi->has_summary)
 		return;
