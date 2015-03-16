@@ -184,7 +184,7 @@ int nandmtd2_MarkNANDBlockBad(struct yaffs_dev *dev, int blockNo)
 	retval =
 	    mtd->block_markbad(mtd,
 			       blockNo * dev->param.chunks_per_block *
-			       dev->data_bytes_per_chunk);
+			       dev->param.total_bytes_per_chunk);
 
 	if (retval == 0)
 		return YAFFS_OK;
@@ -203,7 +203,7 @@ int nandmtd2_QueryNANDBlock(struct yaffs_dev *dev, int blockNo,
 	retval =
 	    mtd->block_isbad(mtd,
 			     blockNo * dev->param.chunks_per_block *
-			     dev->data_bytes_per_chunk);
+			     dev->param.total_bytes_per_chunk);
 
 	if (retval) {
 		yaffs_trace(YAFFS_TRACE_MTD, "block is bad");

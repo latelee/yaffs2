@@ -1174,7 +1174,7 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 		else
 			maxRead = 0;
 
-		if (nbyte > maxRead)
+		if ((Y_LOFF_T)nbyte > maxRead)
 			nbyte = maxRead;
 
 		yaffsfs_GetHandle(handle);

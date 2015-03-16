@@ -160,8 +160,8 @@ int yaffs1_scan(struct yaffs_dev *dev)
 				    tags.n_bytes;
 				if (in &&
 				    in->variant_type ==
-				     YAFFS_OBJECT_TYPE_FILE &&
-				    in->variant.file_variant.scanned_size <
+				    YAFFS_OBJECT_TYPE_FILE &&
+				    (unsigned)in->variant.file_variant.scanned_size <
 				      endpos) {
 					in->variant.file_variant.scanned_size =
 					    endpos;

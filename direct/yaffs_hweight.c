@@ -38,16 +38,15 @@ static const char yaffs_count_bits_table[256] = {
 
 int yaffs_hweight8(u8 x)
 {
-	int ret_val;
-	ret_val = yaffs_count_bits_table[x];
-	return ret_val;
+	return yaffs_count_bits_table[x];
 }
 
 int yaffs_hweight32(u32 x)
 {
-	return yaffs_hweight8(x & 0xff) +
-		yaffs_hweight8((x >> 8) & 0xff) +
-		yaffs_hweight8((x >> 16) & 0xff) +
-		yaffs_hweight8((x >> 24) & 0xff);
+	return 
+		yaffs_count_bits_table[x & 0xff] +
+		yaffs_count_bits_table[(x>>8) & 0xff] +
+		yaffs_count_bits_table[(x>>16) & 0xff] +
+		yaffs_count_bits_table[(x>>24) & 0xff];
 }
 

@@ -29,7 +29,7 @@
  * the partition is at least this big.
  */
 #define YAFFS_CHECKPOINT_MIN_BLOCKS 60
-#define YAFFS_SMALL_HOLE_THRESHOLD 4
+#define YAFFS_SMALL_HOLE_BLOCKS 4
 
 /*
  * Oldest Dirty Sequence Number handling.
@@ -862,8 +862,9 @@ int yaffs2_handle_hole(struct yaffs_obj *obj, loff_t new_size)
 
 	increase = new_size - old_file_size;
 
-	if (increase < YAFFS_SMALL_HOLE_THRESHOLD * dev->data_bytes_per_chunk &&
-	    yaffs_check_alloc_available(dev, YAFFS_SMALL_HOLE_THRESHOLD + 1))
+	if (increase < 
+	     (loff_t)(YAFFS_SMALL_HOLE_BLOCKS * dev->data_bytes_per_chunk) &&
+	    yaffs_check_alloc_available(dev, YAFFS_SMALL_HOLE_BLOCKS + 1))
 		small_hole = 1;
 	else
 		small_hole = 0;

@@ -2809,7 +2809,7 @@ static unsigned yaffs_find_gc_block(struct yaffs_dev *dev,
 	 */
 
 	if (!selected && dev->param.is_yaffs2 &&
-	    dev->gc_not_done >= (background ? 10 : 20)) {
+	    dev->gc_not_done >= (unsigned)(background ? 10 : 20)) {
 		yaffs2_find_oldest_dirty_seq(dev);
 		if (dev->oldest_dirty_block > 0) {
 			selected = dev->oldest_dirty_block;
@@ -3650,7 +3650,7 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 
 	/* Update file object */
 
-	if ((start_write + n_done) > in->variant.file_variant.file_size)
+	if ((start_write + n_done) > (u32)in->variant.file_variant.file_size)
 		in->variant.file_variant.file_size = (start_write + n_done);
 
 	in->dirty = 1;
@@ -5096,16 +5096,22 @@ int yaffs_get_n_free_chunks(struct yaffs_dev *dev)
  */
 void yaffs_oh_size_load(struct yaffs_obj_hdr *oh, loff_t fsize)
 {
+	int shift = 32;
+
 	oh->file_size_low = (fsize & 0xFFFFFFFF);
-	oh->file_size_high = ((fsize >> 32) & 0xFFFFFFFF);
+	if (sizeof(loff_t) >= 8)
+		oh->file_size_high = ((fsize >> shift) & 0xFFFFFFFF);
+	else
+		oh->file_size_high = 0;
 }
 
 loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh)
 {
+	int shift = 32;
 	loff_t retval;
 
 	if (sizeof(loff_t) >= 8 && ~(oh->file_size_high))
-		retval = (((loff_t) oh->file_size_high) << 32) |
+		retval = (((loff_t) oh->file_size_high) << shift) |
 			(((loff_t) oh->file_size_low) & 0xFFFFFFFF);
 	else
 		retval = (loff_t) oh->file_size_low;
